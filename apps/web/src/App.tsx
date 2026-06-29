@@ -7,6 +7,7 @@ import ProductDetail from './pages/ProductDetail';
 import CartPage from './pages/CartPage';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminVendors from './pages/admin/AdminVendors';
 import AdminCoupons from './pages/admin/AdminCoupons';
@@ -119,6 +120,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
+          <Route path="/orders/:id" element={<OrderDetail />} />
         <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<AdminVendors />} />
                     <Route path="vendors" element={<AdminVendors />} />

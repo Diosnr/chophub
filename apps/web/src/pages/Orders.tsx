@@ -52,46 +52,46 @@ export default function Orders() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order) => (
-              <div key={order._id} className="border border-gray-200 rounded-xl p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <p className="text-sm text-gray-500">Order #{order._id.slice(-8)}</p>
-                    <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleString()}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold">₦{order.total.toLocaleString()}</p>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        order.paymentStatus === 'paid'
-                          ? 'bg-green-100 text-green-700'
-                          : order.paymentStatus === 'failed'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}
-                    >
-                      {order.paymentStatus}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  {order.items.map((item, idx) => (
-                    <div key={idx} className="text-sm text-gray-700 flex justify-between">
-                      <span>
-                        {item.name} × {item.qty}
-                        {item.weightKg ? ` (${item.weightKg.toFixed(1)} kg)` : ''}
-                      </span>
-                      <span className="text-gray-500">₦{item.lineTotal.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between text-xs text-gray-500">
-                  <span>Status: <strong>{order.orderStatus}</strong></span>
-                  <span>{order.paymentMethod}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+                        {orders.map((order) => (
+                          <Link key={order._id} to={`/orders/${order._id}`} className="block border border-gray-200 rounded-xl p-4 hover:border-brand-600 transition-colors">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <p className="text-sm text-gray-500">Order #{order._id.slice(-8)}</p>
+                                <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleString()}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold">₦{order.total.toLocaleString()}</p>
+                                <span
+                                  className={`text-xs px-2 py-1 rounded-full ${
+                                    order.paymentStatus === 'paid'
+                                      ? 'bg-green-100 text-green-700'
+                                      : order.paymentStatus === 'failed'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-yellow-100 text-yellow-700'
+                                  }`}
+                                >
+                                  {order.paymentStatus}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              {order.items.map((item, idx) => (
+                                <div key={idx} className="text-sm text-gray-700 flex justify-between">
+                                  <span>
+                                    {item.name} × {item.qty}
+                                    {item.weightKg ? ` (${item.weightKg.toFixed(1)} kg)` : ''}
+                                  </span>
+                                  <span className="text-gray-500">₦{item.lineTotal.toLocaleString()}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between text-xs text-gray-500">
+                              <span>Status: <strong>{order.orderStatus}</strong></span>
+                              <span>{order.paymentMethod} · View details →</span>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
         )}
       </main>
     </div>
