@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Browse from './pages/Browse';
+import ProductDetail from './pages/ProductDetail';
+import CartPage from './pages/CartPage';
+import Checkout from './pages/Checkout';
 import { useAuth } from './lib/auth';
+import { useCart } from './lib/cart';
 
 function Home() {
   const [apiStatus, setApiStatus] = useState<string>('checking...');
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
+  const cartCount = useCart((s) => s.items.length);
 
   useEffect(() => {
     const apiUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:4000';
@@ -24,7 +30,7 @@ function Home() {
           <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/browse" className="text-gray-700 hover:text-brand-600">Browse</Link>
-            <Link to="/vendors" className="text-gray-700 hover:text-brand-600">Vendors</Link>
+            <Link to="/cart" className="text-gray-700 hover:text-brand-600">Cart ({cartCount})</Link>
             {user ? (
               <>
                 <span className="text-gray-700">Hi, {user.name.split(' ')[0]}</span>
@@ -51,9 +57,9 @@ function Home() {
           <Link to="/browse" className="bg-brand-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-brand-700">
             Browse vendors
           </Link>
-          <button className="border border-gray-300 px-6 py-3 rounded-lg text-lg font-semibold text-gray-700 hover:border-brand-600 hover:text-brand-600">
+          <Link to="/signup" className="border border-gray-300 px-6 py-3 rounded-lg text-lg font-semibold text-gray-700 hover:border-brand-600 hover:text-brand-600">
             Become a vendor
-          </button>
+          </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
           {[
@@ -83,22 +89,6 @@ function Home() {
   );
 }
 
-function Browse() {
-  return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
-        </div>
-      </header>
-      <main className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold mb-4">Browse</h2>
-        <p className="text-gray-600">Product catalog coming in the next iteration.</p>
-      </main>
-    </div>
-  );
-}
-
 function App() {
   return (
     <BrowserRouter>
@@ -107,6 +97,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/browse" element={<Browse />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<Checkout />} />
       </Routes>
     </BrowserRouter>
   );
