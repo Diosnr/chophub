@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: chophub-web
+    env: static
+    buildCommand: npm --workspace apps/web install && npm --workspace apps/web run build
+    staticPublishPath: apps/web/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://chophub-api.onrender.com
+      - key: VITE_MONNIFY_PUBLIC_KEY
+        sync: false
+
+  - type: web
+    name: chophub-api
+    env: node
+    rootDir: apps/api
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: MONNIFY_API_KEY
+        sync: false
+      - key: MONNIFY_SECRET_KEY
+        sync: false
+      - key: MONNIFY_CONTRACT_CODE
+        sync: false
+      - key: MONNIFY_WEBHOOK_SECRET
+        sync: false
+      - key: NODE_ENV
+        value: production
