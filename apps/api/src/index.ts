@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './db';
 import authRoutes from './routes/auth';
+import vendorRoutes from './routes/vendors';
+import productRoutes from './routes/products';
 
 dotenv.config();
 
@@ -22,12 +24,14 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/vendors', vendorRoutes);
+app.use('/api/products', productRoutes);
 
 const MONGO_URI = process.env.MONGO_URI;
 if (MONGO_URI && MONGO_URI.startsWith('mongodb')) {
   connectDB(MONGO_URI).catch((err) => console.error('DB connect error:', err.message));
 } else {
-  console.log('MONGO_URI not set — API running in health-only mode (auth endpoints will fail)');
+  console.log('MONGO_URI not set — API running in health-only mode');
 }
 
 app.listen(PORT, () => {
