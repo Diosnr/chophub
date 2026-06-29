@@ -102,6 +102,13 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminVendors />} />
+          <Route path="vendors" element={<AdminVendors />} />
+          <Route path="coupons" element={<AdminCoupons />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="orders" element={<AdminOrders />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

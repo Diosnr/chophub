@@ -7,6 +7,7 @@ import vendorRoutes from './routes/vendors';
 import productRoutes from './routes/products';
 import orderRoutes from './routes/orders';
 import paymentsRoutes from './routes/payments';
+import adminRoutes from './routes/admin';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentsRoutes);
+app.use('/api/admin', adminRoutes);
 
 const MONGO_URI = process.env.MONGO_URI;
 if (MONGO_URI && MONGO_URI.startsWith('mongodb')) {
