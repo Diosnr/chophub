@@ -80,6 +80,23 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
       couponCode,
     });
 
+    if (paymentMethod === 'wallet') {
+      const { debitWalletForOrder, applyReferralReward } = await import('../services/wallet');
+      try {
+        await debitWalletForOrder({ userId: req.userId!, orderId: order._id, amount: total });
+        order.paymentStatus = 'paid';
+        order.orderStatus = 'accepted';
+        await order.save();
+        applyReferralReward(String(req.userId), String(order._id)).catch((err) =>
+          console.error('referral reward error:', err.message)
+        );
+      } catch (walletErr) {
+        await Order.findByIdAndDelete(order._id);
+        const wmsg = walletErr instanceof Error ? walletErr.message : String(walletErr);
+        return res.status(400).json({ error: 'wallet_payment_failed', message: wmsg });
+      }
+    }
+
     return res.status(201).json(order);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

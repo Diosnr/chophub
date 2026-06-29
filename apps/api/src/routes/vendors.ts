@@ -78,4 +78,17 @@ router.post('/:id/reject', requireAuth, requireRole('admin'), async (req: AuthRe
   }
 });
 
+router.get("/me", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const vendor = await Vendor.findOne({ userId: req.userId });
+    if (!vendor) {
+      return res.status(404).json({ error: "not_found", message: "No vendor application found" });
+    }
+    return res.json(vendor);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: "server_error", message });
+  }
+});
+
 export default router;

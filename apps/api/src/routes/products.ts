@@ -103,4 +103,18 @@ router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+router.get("/mine", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const vendor = await Vendor.findOne({ userId: req.userId });
+    if (!vendor) {
+      return res.status(404).json({ error: "not_found", message: "No vendor application found" });
+    }
+    const products = await Product.find({ vendorId: vendor._id }).sort({ createdAt: -1 });
+    return res.json(products);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: "server_error", message });
+  }
+});
+
 export default router;

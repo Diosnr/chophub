@@ -12,6 +12,11 @@ import AdminVendors from './pages/admin/AdminVendors';
 import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminOrders from './pages/admin/AdminOrders';
+import VendorLayout from './pages/vendor/VendorLayout';
+import VendorOnboard from './pages/vendor/VendorOnboard';
+import VendorProducts from './pages/vendor/VendorProducts';
+import VendorOrders from './pages/vendor/VendorOrders';
+import Wallet from './pages/Wallet';
 import { useAuth } from './lib/auth';
 import { useCart } from './lib/cart';
 
@@ -35,20 +40,27 @@ function Home() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
           <nav className="flex items-center gap-4 text-sm">
-            <Link to="/browse" className="text-gray-700 hover:text-brand-600">Browse</Link>
-            <Link to="/cart" className="text-gray-700 hover:text-brand-600">Cart ({cartCount})</Link>
-            {user ? (
-              <>
-                <span className="text-gray-700">Hi, {user.name.split(' ')[0]}</span>
-                <button onClick={logout} className="text-gray-700 hover:text-brand-600">Logout</button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="text-gray-700 hover:text-brand-600">Login</Link>
-                <Link to="/signup" className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">Sign up</Link>
-              </>
-            )}
-          </nav>
+                        <Link to="/browse" className="text-gray-700 hover:text-brand-600">Browse</Link>
+                        <Link to="/cart" className="text-gray-700 hover:text-brand-600">Cart ({cartCount})</Link>
+                        {user ? (
+                          <>
+                            <Link to="/wallet" className="text-gray-700 hover:text-brand-600">Wallet</Link>
+                            {(user.role === 'vendor' || user.role === 'admin') && (
+                              <Link to="/vendor/products" className="text-gray-700 hover:text-brand-600">Vendor</Link>
+                            )}
+                            {user.role === 'admin' && (
+                              <Link to="/admin" className="text-gray-700 hover:text-brand-600">Admin</Link>
+                            )}
+                            <span className="text-gray-700">Hi, {user.name.split(' ')[0]}</span>
+                            <button onClick={logout} className="text-gray-700 hover:text-brand-600">Logout</button>
+                          </>
+                        ) : (
+                          <>
+                            <Link to="/login" className="text-gray-700 hover:text-brand-600">Login</Link>
+                            <Link to="/signup" className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">Sign up</Link>
+                          </>
+                        )}
+                      </nav>
         </div>
       </header>
       <main className="max-w-6xl mx-auto px-4 py-16">
@@ -108,13 +120,20 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminVendors />} />
-          <Route path="vendors" element={<AdminVendors />} />
-          <Route path="coupons" element={<AdminCoupons />} />
-          <Route path="settings" element={<AdminSettings />} />
-          <Route path="orders" element={<AdminOrders />} />
-        </Route>
-      </Routes>
+                    <Route index element={<AdminVendors />} />
+                    <Route path="vendors" element={<AdminVendors />} />
+                    <Route path="coupons" element={<AdminCoupons />} />
+                    <Route path="settings" element={<AdminSettings />} />
+                    <Route path="orders" element={<AdminOrders />} />
+                  </Route>
+                  <Route path="/vendor" element={<VendorLayout />}>
+                    <Route index element={<VendorOnboard />} />
+                    <Route path="onboard" element={<VendorOnboard />} />
+                    <Route path="products" element={<VendorProducts />} />
+                    <Route path="orders" element={<VendorOrders />} />
+                  </Route>
+                  <Route path="/wallet" element={<Wallet />} />
+                </Routes>
     </BrowserRouter>
   );
 }

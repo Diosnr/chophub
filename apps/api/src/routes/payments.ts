@@ -3,6 +3,7 @@ import { Order } from '../models/Order';
 import { User } from '../models/User';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { initializeTransaction, monnifyConfigured, verifyWebhookSignature } from '../services/monnify';
+import { applyReferralReward } from '../services/wallet';
 
 const router = Router();
 
@@ -70,6 +71,10 @@ router.post('/monnify/webhook', async (req, res) => {
       if (eventType === 'SUCCESSFUL_TRANSACTION') {
         order.paymentStatus = 'paid';
         order.orderStatus = 'accepted';
+        await order.save();
+        applyReferralReward(String(order.customerId), String(order._id)).catch((err: Error) =>
+          console.error('referral reward error:', err.message)
+        );
       } else if (eventType === 'FAILED_TRANSACTION') {
         order.paymentStatus = 'failed';
       }
