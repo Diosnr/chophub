@@ -24,6 +24,7 @@ import Wallet from './pages/Wallet';
 import Header from './components/Header';
 import { ToastHost } from './components/Toast';
 import { useAuth } from './lib/auth';
+import { useCart } from './lib/cart';
 
 function Landing() {
   const [apiStatus, setApiStatus] = useState<string>('checking...');
@@ -86,9 +87,12 @@ function Landing() {
 // Redirects logged-in users to their role-appropriate home
 function Home() {
   const user = useAuth((s) => s.user);
+  const cartCount = useCart((s) => s.items.length);
   if (!user) return <Landing />;
   if (user.role === 'admin' || user.role === 'superadmin') return <Navigate to="/admin" replace />;
   if (user.role === 'vendor') return <Navigate to="/vendor" replace />;
+  // Customer with cart items -> continue checkout; otherwise browse
+  if (cartCount > 0) return <Navigate to="/cart" replace />;
   return <Navigate to="/browse" replace />;
 }
 
