@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import VerifyEmail from './pages/VerifyEmail';
@@ -22,8 +22,10 @@ import VendorOrders from './pages/vendor/VendorOrders';
 import VendorStorefront from './pages/VendorStorefront';
 import Wallet from './pages/Wallet';
 import Header from './components/Header';
+import { ToastHost } from './components/Toast';
+import { useAuth } from './lib/auth';
 
-function Home() {
+function Landing() {
   const [apiStatus, setApiStatus] = useState<string>('checking...');
 
   useEffect(() => {
@@ -81,9 +83,19 @@ function Home() {
   );
 }
 
+// Redirects logged-in users to their role-appropriate home
+function Home() {
+  const user = useAuth((s) => s.user);
+  if (!user) return <Landing />;
+  if (user.role === 'admin' || user.role === 'superadmin') return <Navigate to="/admin" replace />;
+  if (user.role === 'vendor') return <Navigate to="/vendor" replace />;
+  return <Navigate to="/browse" replace />;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ToastHost />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
