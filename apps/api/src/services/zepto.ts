@@ -18,7 +18,7 @@ export async function sendMail(params: SendMailParams): Promise<void> {
     throw new Error('Zepto not configured (set ZEPTO_API_TOKEN + ZEPTO_FROM_EMAIL)');
   }
 
-  const response = await fetch('https://api.zeptomail.com/v1.1/email/send', {
+  const response = await fetch('https://api.zeptomail.com/v1.1/email', {
     method: 'POST',
     headers: {
       Authorization: `Zoho-enczapikey ${token}`,
