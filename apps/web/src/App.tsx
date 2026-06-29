@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import { useAuth } from './lib/auth';
 
-function App() {
+function Home() {
   const [apiStatus, setApiStatus] = useState<string>('checking...');
+  const user = useAuth((s) => s.user);
+  const logout = useAuth((s) => s.logout);
 
   useEffect(() => {
     const apiUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:4000';
@@ -15,12 +21,21 @@ function App() {
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-brand-600">ChopHub</h1>
+          <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
           <nav className="flex items-center gap-4 text-sm">
-            <a href="#" className="text-gray-700 hover:text-brand-600">Browse</a>
-            <a href="#" className="text-gray-700 hover:text-brand-600">Vendors</a>
-            <a href="#" className="text-gray-700 hover:text-brand-600">Login</a>
-            <a href="#" className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">Sign up</a>
+            <Link to="/browse" className="text-gray-700 hover:text-brand-600">Browse</Link>
+            <Link to="/vendors" className="text-gray-700 hover:text-brand-600">Vendors</Link>
+            {user ? (
+              <>
+                <span className="text-gray-700">Hi, {user.name.split(' ')[0]}</span>
+                <button onClick={logout} className="text-gray-700 hover:text-brand-600">Logout</button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-gray-700 hover:text-brand-600">Login</Link>
+                <Link to="/signup" className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">Sign up</Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -33,9 +48,9 @@ function App() {
           Marketplace connecting you with vendors across Lagos and beyond. Live catfish by weight, frozen chicken by pack, cooked food by plate.
         </p>
         <div className="flex gap-4 mb-12">
-          <button className="bg-brand-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-brand-700">
+          <Link to="/browse" className="bg-brand-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-brand-700">
             Browse vendors
-          </button>
+          </Link>
           <button className="border border-gray-300 px-6 py-3 rounded-lg text-lg font-semibold text-gray-700 hover:border-brand-600 hover:text-brand-600">
             Become a vendor
           </button>
@@ -65,6 +80,35 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function Browse() {
+  return (
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
+        </div>
+      </header>
+      <main className="max-w-6xl mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold mb-4">Browse</h2>
+        <p className="text-gray-600">Product catalog coming in the next iteration.</p>
+      </main>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/browse" element={<Browse />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
