@@ -14,15 +14,21 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuth((s) => s.setAuth);
+  const setPendingVerification = useAuth((s) => s.setPendingVerification);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const { user, token } = await signup({ name, email, password, phone, referredBy });
+      const { user, token, requiresVerification } = await signup({ name, email, password, phone, referredBy });
       setAuth(user, token);
-      navigate('/');
+      if (requiresVerification) {
+        setPendingVerification(user.email);
+        navigate('/verify');
+      } else {
+        navigate('/');
+      }
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Signup failed';
       setError(message);

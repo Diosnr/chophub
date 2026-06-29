@@ -6,10 +6,12 @@ export default function AdminLayout() {
   const logout = useAuth((s) => s.logout);
   const navigate = useNavigate();
 
-  if (!user || user.role !== 'admin') {
+  if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
     navigate('/');
     return null;
   }
+
+  const isSuperadmin = user.role === 'superadmin';
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -21,10 +23,17 @@ export default function AdminLayout() {
           <Link to="/admin/coupons" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium">Coupons</Link>
           <Link to="/admin/settings" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium">Settings</Link>
           <Link to="/admin/orders" className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium">Orders</Link>
+          {isSuperadmin && (
+            <Link to="/admin/admins" className="block px-3 py-2 rounded-lg text-brand-700 bg-brand-50 hover:bg-brand-100 text-sm font-medium">
+              Admins
+            </Link>
+          )}
         </nav>
         <div className="pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 mb-2">Signed in as <strong>{user.email}</strong></p>
-          <button onClick={() => { logout(); navigate('/'); }} className="text-sm text-red-600 hover:text-red-700">Logout</button>
+          <p className="text-xs text-gray-500 mb-1">Signed in as</p>
+          <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+          <p className="text-xs text-brand-600 font-semibold mt-1">{user.role}</p>
+          <button onClick={() => { logout(); navigate('/'); }} className="text-sm text-red-600 hover:text-red-700 mt-3">Logout</button>
         </div>
       </aside>
       <main className="flex-1 p-8">

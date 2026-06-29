@@ -32,3 +32,19 @@ export function requireRole(role: string) {
     next();
   };
 }
+
+export function requireAnyRole(...roles: string[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.userRole || !roles.includes(req.userRole)) {
+      return res.status(403).json({ error: 'forbidden', message: 'Insufficient permissions' });
+    }
+    next();
+  };
+}
+
+export function requireSuperadmin(req: AuthRequest, res: Response, next: NextFunction) {
+  if (req.userRole !== 'superadmin') {
+    return res.status(403).json({ error: 'forbidden', message: 'Superadmin only' });
+  }
+  next();
+}

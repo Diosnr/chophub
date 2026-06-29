@@ -1,6 +1,6 @@
 // Shared types between apps/web and apps/api
 
-export type UserRole = 'customer' | 'vendor' | 'admin';
+export type UserRole = 'customer' | 'vendor' | 'admin' | 'superadmin';
 
 export interface User {
   _id: string;
@@ -8,6 +8,7 @@ export interface User {
   name: string;
   phone?: string;
   role: UserRole;
+  emailVerified: boolean;
   walletBalance: number;
   referralCode: string;
   referredBy?: string;

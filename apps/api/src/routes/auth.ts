@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User, generateReferralCode } from '../models/User';
+import { User, generateReferralCode, generateVerificationCode } from '../models/User';
+import { sendMail, verificationEmail, welcomeEmail, zeptoConfigured } from '../services/zepto';
 
 const router = Router();
 
@@ -10,6 +11,12 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 function signToken(payload: object): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
+}
+
+async function sendVerification(email: string, name: string, code: string): Promise<void> {
+  const mail = verificationEmail({ name, code });
+  mail.to = email;
+  await sendMail(mail);
 }
 
 router.post('/signup', async (req, res) => {
@@ -24,6 +31,9 @@ router.post('/signup', async (req, res) => {
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const referralCode = generateReferralCode();
+    const verificationCode = generateVerificationCode();
+    const verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
     const user = await User.create({
       email: email.toLowerCase(),
       passwordHash,
@@ -33,16 +43,30 @@ router.post('/signup', async (req, res) => {
       referredBy,
       walletBalance: 0,
       role: 'customer',
+      emailVerified: false,
+      verificationCode,
+      verificationCodeExpiresAt,
     });
+
+    if (zeptoConfigured()) {
+      try {
+        await sendVerification(user.email, user.name, verificationCode);
+      } catch (err) {
+        console.error('[signup] failed to send verification email:', err);
+      }
+    }
+
     const token = signToken({ sub: user._id.toString(), role: user.role });
     return res.status(201).json({
       token,
+      requiresVerification: true,
       user: {
         _id: user._id,
         email: user.email,
         name: user.name,
         phone: user.phone,
         role: user.role,
+        emailVerified: false,
         walletBalance: user.walletBalance,
         referralCode: user.referralCode,
       },
@@ -70,16 +94,114 @@ router.post('/login', async (req, res) => {
     const token = signToken({ sub: user._id.toString(), role: user.role });
     return res.json({
       token,
+      requiresVerification: !user.emailVerified,
       user: {
         _id: user._id,
         email: user.email,
         name: user.name,
         phone: user.phone,
         role: user.role,
+        emailVerified: user.emailVerified,
         walletBalance: user.walletBalance,
         referralCode: user.referralCode,
       },
     });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: 'server_error', message });
+  }
+});
+
+router.post('/verify', async (req, res) => {
+  try {
+    const { email, code } = req.body || {};
+    if (!email || !code) {
+      return res.status(400).json({ error: 'validation', message: 'email and code required' });
+    }
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: 'not_found', message: 'Account not found' });
+    }
+    if (user.emailVerified) {
+      return res.json({
+        alreadyVerified: true,
+        user: {
+          _id: user._id,
+          email: user.email,
+          name: user.name,
+          phone: user.phone,
+          role: user.role,
+          emailVerified: true,
+          walletBalance: user.walletBalance,
+          referralCode: user.referralCode,
+        },
+      });
+    }
+    if (!user.verificationCode || !user.verificationCodeExpiresAt) {
+      return res.status(400).json({ error: 'no_code', message: 'No verification code. Request a new one.' });
+    }
+    if (user.verificationCodeExpiresAt.getTime() < Date.now()) {
+      return res.status(400).json({ error: 'code_expired', message: 'Verification code expired. Request a new one.' });
+    }
+    if (user.verificationCode !== code.trim()) {
+      return res.status(400).json({ error: 'code_invalid', message: 'Incorrect verification code' });
+    }
+    user.emailVerified = true;
+    user.verificationCode = undefined;
+    user.verificationCodeExpiresAt = undefined;
+    await user.save();
+
+    if (zeptoConfigured()) {
+      try {
+        const mail = welcomeEmail({ name: user.name, referralCode: user.referralCode });
+        mail.to = user.email;
+        await sendMail(mail);
+      } catch (err) {
+        console.error('[verify] failed to send welcome email:', err);
+      }
+    }
+
+    return res.json({
+      verified: true,
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        role: user.role,
+        emailVerified: true,
+        walletBalance: user.walletBalance,
+        referralCode: user.referralCode,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: 'server_error', message });
+  }
+});
+
+router.post('/resend-code', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    if (!email) {
+      return res.status(400).json({ error: 'validation', message: 'email required' });
+    }
+    if (!zeptoConfigured()) {
+      return res.status(503).json({ error: 'email_disabled', message: 'Email service not configured' });
+    }
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: 'not_found', message: 'Account not found' });
+    }
+    if (user.emailVerified) {
+      return res.json({ alreadyVerified: true });
+    }
+    const code = generateVerificationCode();
+    user.verificationCode = code;
+    user.verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+    await sendVerification(user.email, user.name, code);
+    return res.json({ sent: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: 'server_error', message });
@@ -104,6 +226,7 @@ router.get('/me', async (req, res) => {
       name: user.name,
       phone: user.phone,
       role: user.role,
+      emailVerified: user.emailVerified,
       walletBalance: user.walletBalance,
       referralCode: user.referralCode,
     });
