@@ -22,8 +22,8 @@ export default function Header() {
 
   return (
     <>
-      <header className="border-b border-gray-200 bg-white sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <header className="border-b border-gray-200 bg-white sticky top-0 z-30 pt-[env(safe-area-inset-top)]">
+              <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Link to="/" className="text-xl sm:text-2xl font-bold text-brand-600 shrink-0">ChopHub</Link>
 
           {/* Desktop nav (md and up) */}
@@ -114,7 +114,7 @@ export default function Header() {
       </header>
 
       {/* Mobile bottom tab bar — primary actions always reachable */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 pb-[env(safe-area-inset-bottom)]">
         <div className="grid grid-cols-4">
           <Link to="/" className="flex flex-col items-center py-2 text-gray-700 hover:text-brand-600">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

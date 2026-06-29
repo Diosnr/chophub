@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import VerifyEmail from './pages/VerifyEmail';
@@ -25,6 +25,7 @@ import Header from './components/Header';
 import { ToastHost } from './components/Toast';
 import { useAuth } from './lib/auth';
 import { useCart } from './lib/cart';
+import Onboarding, { useOnboarding } from './pages/Onboarding';
 
 function Landing() {
   const [apiStatus, setApiStatus] = useState<string>('checking...');
@@ -96,10 +97,38 @@ function Home() {
   return <Navigate to="/browse" replace />;
 }
 
+// Hooks the Android hardware back button to React Router's history.
+// Only runs on native (Capacitor) — web browsers ignore it.
+function NativeBackHandler() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (!Capacitor.isNativePlatform()) return;
+        const { App: CapApp } = await import('@capacitor/app');
+        const handler = await CapApp.addListener('backButton', ({ canGoBack }) => {
+          if (canGoBack) navigate(-1);
+          else CapApp.exitApp();
+        });
+        cleanup = () => { handler.remove(); };
+      } catch {
+        // Plugins not available — silently ignore (e.g. running on web preview)
+      }
+    })();
+    return () => { cleanup?.(); };
+  }, [navigate]);
+  return null;
+}
+
 function App() {
+  const onboardingComplete = useOnboarding((s) => s.complete);
   return (
     <BrowserRouter>
       <ToastHost />
+      <NativeBackHandler />
+      {!onboardingComplete && <Onboarding />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

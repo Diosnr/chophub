@@ -1,9 +1,11 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
+import { useOnboarding } from '../Onboarding';
 
 export default function AdminLayout() {
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
+  const resetOnboarding = useOnboarding((s) => s.reset);
   const navigate = useNavigate();
 
   if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
@@ -30,11 +32,14 @@ export default function AdminLayout() {
           )}
         </nav>
         <div className="pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500 mb-1">Signed in as</p>
-          <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
-          <p className="text-xs text-brand-600 font-semibold mt-1">{user.role}</p>
-          <button onClick={() => { logout(); navigate('/'); }} className="text-sm text-red-600 hover:text-red-700 mt-3">Logout</button>
-        </div>
+                    <p className="text-xs text-gray-500 mb-1">Signed in as</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                    <p className="text-xs text-brand-600 font-semibold mt-1">{user.role}</p>
+                    <button onClick={() => { resetOnboarding(); navigate('/'); }} className="text-xs text-gray-500 hover:text-gray-700 mt-3 block" title="Show the mobile onboarding screens again">
+                      Reset mobile intro
+                    </button>
+                    <button onClick={() => { logout(); navigate('/'); }} className="text-sm text-red-600 hover:text-red-700 mt-2">Logout</button>
+                  </div>
       </aside>
       <main className="flex-1 p-8">
         <Outlet />
