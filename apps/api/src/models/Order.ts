@@ -11,21 +11,22 @@ export interface OrderItem {
 }
 
 export interface OrderDocument extends Document {
-  customerId: mongoose.Types.ObjectId;
-  items: OrderItem[];
-  subtotal: number;
-  deliveryFee: number;
-  couponDiscount: number;
-  total: number;
-  paymentMethod: 'monnify' | 'wallet';
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  orderStatus: 'pending' | 'accepted' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
-  deliveryAddress: string;
-  monnifyReference?: string;
-  couponCode?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+    customerId: mongoose.Types.ObjectId;
+    items: OrderItem[];
+    subtotal: number;
+    deliveryFee: number;
+    deliveryZone?: string;
+    couponDiscount: number;
+    total: number;
+    paymentMethod: 'monnify' | 'wallet';
+    paymentStatus: 'pending' | 'paid' | 'failed';
+    orderStatus: 'pending' | 'accepted' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
+    deliveryAddress: string;
+    monnifyReference?: string;
+    couponCode?: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }
 
 const orderItemSchema = new Schema<OrderItem>(
   {
@@ -46,7 +47,8 @@ const orderSchema = new Schema<OrderDocument>(
     items: [orderItemSchema],
     subtotal: { type: Number, required: true },
     deliveryFee: { type: Number, default: 0 },
-    couponDiscount: { type: Number, default: 0 },
+          deliveryZone: { type: String },
+          couponDiscount: { type: Number, default: 0 },
     total: { type: Number, required: true },
     paymentMethod: { type: String, enum: ['monnify', 'wallet'], default: 'monnify' },
     paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },

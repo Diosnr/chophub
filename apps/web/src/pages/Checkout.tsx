@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../lib/cart';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import Header from '../components/Header';
 
 interface CartItem {
   productId: string;
@@ -13,6 +14,13 @@ interface CartItem {
   unitPrice: number;
   qty: number;
   weightKg?: number;
+}
+
+interface DeliveryZone {
+  _id: string;
+  name: string;
+  fee: number;
+  estimatedDays?: number;
 }
 
 function lineTotal(item: CartItem): number {
@@ -28,8 +36,17 @@ export default function Checkout() {
   const [address, setAddress] = useState('');
   const [coupon, setCoupon] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'monnify' | 'wallet'>('monnify');
+  const [zones, setZones] = useState<DeliveryZone[]>([]);
+  const [zoneId, setZoneId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.get('/api/delivery-zones').then((r) => {
+      setZones(r.data);
+      if (r.data.length > 0) setZoneId(r.data[0]._id);
+    }).catch(() => {});
+  }, []);
 
   if (!user) {
     navigate('/login');
@@ -41,9 +58,16 @@ export default function Checkout() {
   }
 
   const subtotal = items.reduce((sum, item) => sum + lineTotal(item), 0);
+  const selectedZone = zones.find((z) => z._id === zoneId);
+  const deliveryFee = selectedZone?.fee ?? 0;
+  const total = subtotal + deliveryFee;
 
   async function onPlaceOrder(e: React.FormEvent) {
     e.preventDefault();
+    if (!selectedZone) {
+      setError('Please select a delivery zone');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -54,6 +78,8 @@ export default function Checkout() {
           weightKg: i.weightKg,
         })),
         deliveryAddress: address,
+        deliveryZone: selectedZone.name,
+        deliveryFee,
         couponCode: coupon || undefined,
         paymentMethod,
       });
@@ -75,12 +101,8 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
-        </div>
-      </header>
+    <div className="min-h-screen bg-white pb-20 md:pb-0">
+      <Header />
       <main className="max-w-6xl mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold mb-6">Checkout</h2>
         {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
@@ -97,6 +119,41 @@ export default function Checkout() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-600"
               />
             </div>
+
+            {zones.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Delivery zone</label>
+                <div className="space-y-2">
+                  {zones.map((zone) => (
+                    <label
+                      key={zone._id}
+                      className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:border-brand-600 ${
+                        zoneId === zone._id ? 'border-brand-600 bg-brand-50' : 'border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="deliveryZone"
+                          checked={zoneId === zone._id}
+                          onChange={() => setZoneId(zone._id)}
+                        />
+                        <div>
+                          <div className="font-medium">{zone.name}</div>
+                          {zone.estimatedDays != null && (
+                            <div className="text-sm text-gray-500">~{zone.estimatedDays} day{zone.estimatedDays === 1 ? '' : 's'}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="font-semibold text-gray-900">
+                        {zone.fee === 0 ? 'Free' : `₦${zone.fee.toLocaleString()}`}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Coupon code (optional)</label>
               <input
@@ -135,13 +192,17 @@ export default function Checkout() {
                 <span>₦{subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Delivery</span>
-                <span className="text-gray-400">at order confirmation</span>
+                <span className="text-gray-600">Delivery {selectedZone && `(${selectedZone.name})`}</span>
+                <span>{deliveryFee === 0 ? 'Free' : `₦${deliveryFee.toLocaleString()}`}</span>
+              </div>
+              <div className="border-t border-gray-200 pt-2 flex justify-between font-semibold">
+                <span>Total</span>
+                <span className="text-brand-600">₦{total.toLocaleString()}</span>
               </div>
             </div>
             <button
               type="submit"
-              disabled={loading || !address}
+              disabled={loading || !address || zones.length === 0}
               className="w-full bg-brand-600 text-white py-3 rounded-lg font-semibold hover:bg-brand-700 disabled:opacity-50"
             >
               {loading ? 'Placing order...' : 'Place order & pay'}

@@ -21,14 +21,10 @@ import VendorProducts from './pages/vendor/VendorProducts';
 import VendorOrders from './pages/vendor/VendorOrders';
 import VendorStorefront from './pages/VendorStorefront';
 import Wallet from './pages/Wallet';
-import { useAuth } from './lib/auth';
-import { useCart } from './lib/cart';
+import Header from './components/Header';
 
 function Home() {
   const [apiStatus, setApiStatus] = useState<string>('checking...');
-  const user = useAuth((s) => s.user);
-  const logout = useAuth((s) => s.logout);
-  const cartCount = useCart((s) => s.items.length);
 
   useEffect(() => {
     const apiUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:4000';
@@ -38,54 +34,26 @@ function Home() {
       .catch(() => setApiStatus('offline'));
   }, []);
 
-  const isStaff = user?.role === 'admin' || user?.role === 'superadmin';
-
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link to="/browse" className="text-gray-700 hover:text-brand-600">Browse</Link>
-            <Link to="/cart" className="text-gray-700 hover:text-brand-600">Cart ({cartCount})</Link>
-            {user ? (
-              <>
-                <Link to="/wallet" className="text-gray-700 hover:text-brand-600">Wallet</Link>
-                {(user.role === 'vendor' || isStaff) && (
-                  <Link to="/vendor/products" className="text-gray-700 hover:text-brand-600">Vendor</Link>
-                )}
-                {isStaff && (
-                  <Link to="/admin" className="text-gray-700 hover:text-brand-600">Admin</Link>
-                )}
-                <span className="text-gray-700">Hi, {user.name.split(' ')[0]}</span>
-                <button onClick={logout} className="text-gray-700 hover:text-brand-600">Logout</button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="text-gray-700 hover:text-brand-600">Login</Link>
-                <Link to="/signup" className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">Sign up</Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
-      <main className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-5xl font-bold text-gray-900 mb-4 leading-tight">
-          Fresh catfish, frozen chicken,<br />
+    <div className="min-h-screen bg-white pb-20 md:pb-0">
+      <Header />
+      <main className="max-w-6xl mx-auto px-4 py-12 md:py-16">
+        <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+          Fresh catfish, frozen chicken,<br className="hidden sm:inline" />
           cooked African food — delivered.
         </h2>
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl">
+        <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl">
           Marketplace connecting you with vendors across Ado-Ekiti, Lagos and beyond. Live catfish by weight, frozen chicken by pack, cooked food by plate.
         </p>
-        <div className="flex gap-4 mb-12">
-          <Link to="/browse" className="bg-brand-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-brand-700">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-12">
+          <Link to="/browse" className="bg-brand-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-brand-700 text-center">
             Browse vendors
           </Link>
-          <Link to="/signup" className="border border-gray-300 px-6 py-3 rounded-lg text-lg font-semibold text-gray-700 hover:border-brand-600 hover:text-brand-600">
+          <Link to="/signup" className="border border-gray-300 px-6 py-3 rounded-lg text-lg font-semibold text-gray-700 hover:border-brand-600 hover:text-brand-600 text-center">
             Become a vendor
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 md:mt-16">
           {[
             { title: 'Live catfish', desc: 'Fresh, sized to your weight. Pick 1kg, 2kg, 5kg — we handle the rest.' },
             { title: 'Frozen chicken', desc: 'Whole birds, halves, packs. Vendor-graded, ready for your freezer.' },
@@ -104,7 +72,7 @@ function Home() {
           </span>
         </div>
       </main>
-      <footer className="border-t border-gray-200 mt-16">
+      <footer className="border-t border-gray-200 mt-16 hidden md:block">
         <div className="max-w-6xl mx-auto px-4 py-8 text-sm text-gray-500">
           ChopHub — Ado-Ekiti, Ekiti State · Lagos · Nigeria
         </div>

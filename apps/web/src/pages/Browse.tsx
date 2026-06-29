@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api } from '../lib/api'
+import Header from '../components/Header';
 
 const CATEGORIES = [
   { id: 'live-catfish', label: 'Live catfish' },
@@ -37,14 +38,8 @@ export default function Browse() {
     );
 
     return (
-      <div className="min-h-screen bg-white">
-        <header className="border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
-            <Link to="/cart" className="text-gray-700 hover:text-brand-600">Cart</Link>
-          </div>
-        </header>
-        <main className="max-w-6xl mx-auto px-4 py-8">
+      <div className="min-h-screen bg-white pb-20 md:pb-0">
+      <Header /><main className="max-w-6xl mx-auto px-4 py-8">
           <h2 className="text-3xl font-bold mb-6">Browse</h2>
           <input
             type="search"

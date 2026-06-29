@@ -10,6 +10,7 @@ import orderRoutes from './routes/orders';
 import paymentsRoutes from './routes/payments';
 import adminRoutes, { adminManagement } from './routes/admin';
 import walletRoutes from './routes/wallet';
+import deliveryZoneRoutes, { adminRouter as adminDeliveryZoneRoutes } from './routes/deliveryZones';
 import { User } from './models/User';
 
 dotenv.config();
@@ -41,8 +42,10 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentsRoutes);
+app.use('/api/delivery-zones', deliveryZoneRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin', adminManagement);
+app.use('/api/admin/delivery-zones', adminDeliveryZoneRoutes);
 app.use('/api/wallet', walletRoutes);
 
 const MONGO_URI = process.env.MONGO_URI;

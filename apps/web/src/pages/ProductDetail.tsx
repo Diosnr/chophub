@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api } from '../lib/api'
+import Header from '../components/Header';
 import { useCart } from '../lib/cart';
 
 interface Product {
@@ -53,14 +54,8 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/browse" className="text-2xl font-bold text-brand-600">ChopHub</Link>
-          <Link to="/cart" className="text-gray-700 hover:text-brand-600">Cart</Link>
-        </div>
-      </header>
-      <main className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white pb-20 md:pb-0">
+      <Header /><main className="max-w-6xl mx-auto px-4 py-8">
         <Link to="/browse" className="text-sm text-gray-500 hover:text-brand-600 mb-4 inline-block">← Back to browse</Link>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center text-8xl">

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../lib/cart';
+import Header from '../components/Header';
 
 export default function CartPage() {
   const items = useCart((s) => s.items);
@@ -19,14 +20,8 @@ export default function CartPage() {
   }, {} as Record<string, typeof items>);
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
-          <Link to="/browse" className="text-gray-700 hover:text-brand-600">Continue shopping</Link>
-        </div>
-      </header>
-      <main className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white pb-20 md:pb-0">
+      <Header /><main className="max-w-6xl mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold mb-6">Your cart</h2>
         {items.length === 0 ? (
           <div className="text-center py-16">

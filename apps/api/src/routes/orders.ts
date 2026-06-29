@@ -8,13 +8,13 @@ const router = Router();
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   try {
-    const { items, deliveryAddress, couponCode, paymentMethod } = req.body || {};
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'validation', message: 'items required' });
-    }
-    if (!deliveryAddress) {
-      return res.status(400).json({ error: 'validation', message: 'deliveryAddress required' });
-    }
+    const { items, deliveryAddress, couponCode, paymentMethod, deliveryZone, deliveryFee: clientDeliveryFee } = req.body || {};
+          if (!items || !Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'validation', message: 'items required' });
+          }
+          if (!deliveryAddress) {
+            return res.status(400).json({ error: 'validation', message: 'deliveryAddress required' });
+          }
 
     const productIds = items.map((i: { productId: string }) => i.productId);
     const products = await Product.find({ _id: { $in: productIds }, status: 'active' });
@@ -53,7 +53,14 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     }
 
     const deliverySetting = await Setting.findOne({ key: 'delivery_fee' });
-    const deliveryFee = deliverySetting?.value ?? 0;
+          let deliveryFee = clientDeliveryFee ?? deliverySetting?.value ?? 0;
+          if (deliveryZone) {
+            const { DeliveryZone } = await import('../models/DeliveryZone');
+            const zone = await DeliveryZone.findOne({ name: deliveryZone, active: true });
+            if (zone) {
+              deliveryFee = zone.fee;
+            }
+          }
 
     let couponDiscount = 0;
     if (couponCode) {
@@ -67,18 +74,19 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     const total = subtotal + deliveryFee - couponDiscount;
 
     const order = await Order.create({
-      customerId: req.userId,
-      items: orderItems,
-      subtotal,
-      deliveryFee,
-      couponDiscount,
-      total,
-      paymentMethod: paymentMethod || 'monnify',
-      paymentStatus: 'pending',
-      orderStatus: 'pending',
-      deliveryAddress,
-      couponCode,
-    });
+            customerId: req.userId,
+            items: orderItems,
+            subtotal,
+            deliveryFee,
+            deliveryZone,
+            couponDiscount,
+            total,
+            paymentMethod: paymentMethod || 'monnify',
+            paymentStatus: 'pending',
+            orderStatus: 'pending',
+            deliveryAddress,
+            couponCode,
+          });
 
     if (paymentMethod === 'wallet') {
       const { debitWalletForOrder, applyReferralReward } = await import('../services/wallet');

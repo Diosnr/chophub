@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api } from '../lib/api'
+import Header from '../components/Header';
 import { useAuth } from '../lib/auth';
 
 interface Transaction {
@@ -50,14 +51,8 @@ export default function Wallet() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-brand-600">ChopHub</Link>
-          <Link to="/browse" className="text-gray-700 hover:text-brand-600">Browse</Link>
-        </div>
-      </header>
-      <main className="max-w-3xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white pb-20 md:pb-0">
+      <Header /><main className="max-w-3xl mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold mb-6">Wallet</h2>
         {!user ? (
           <div className="bg-yellow-50 text-yellow-700 p-4 rounded-lg">

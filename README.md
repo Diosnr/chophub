@@ -271,4 +271,227 @@ VITE_MONNIFY_PUBLIC_KEY=...
 
 ---
 
+## Publishing to Google Play Store
+
+This is the playbook for wrapping the ChopHub web app into an Android `.aab` and uploading it to the Google Play Store. Run these from your local machine, not from the sandbox — Android Studio + Gradle + the Android SDK are required.
+
+### Prerequisites (install once)
+
+```bash
+# macOS (Homebrew)
+brew install --cask zulu@17          # JDK 17
+brew install --cask android-studio    # Android SDK + platform-tools + emulator
+
+# Linux (Ubuntu/Debian)
+sudo apt install openjdk-17-jdk
+sudo snap install android-studio --classic
+
+# Set env vars (add to ~/.zshrc or ~/.bashrc)
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # macOS
+export ANDROID_HOME=$HOME/Library/Android/sdk      # macOS
+# OR
+export ANDROID_HOME=$HOME/Android/Sdk              # Linux
+export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin
+```
+
+Verify:
+```bash
+java -version           # openjdk version "17.x.x"
+adb --version
+```
+
+### 1. Clone + install
+
+```bash
+git clone https://github.com/Diosnr/chophub.git
+cd chophub
+bun install
+cd apps/web && bun install && cd ../..
+cd apps/api && bun install && cd ..
+```
+
+### 2. Initialize Capacitor Android (one-time)
+
+```bash
+cd apps/web
+bun x cap add android
+cd ../..
+```
+
+This creates `apps/web/android/` with a full Android Studio project.
+
+### 3. Configure `capacitor.config.ts`
+
+Edit `apps/web/capacitor.config.ts`:
+```typescript
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.chophub.app',
+  appName: 'ChopHub',
+  webDir: 'dist',
+  server: {
+    url: 'https://chophub-api.onrender.com',
+    cleartext: false,
+  },
+  android: {
+    allowMixedContent: false,
+    backgroundColor: '#ea580c',
+  },
+};
+
+export default config;
+```
+
+### 4. Generate Android signing keystore (one-time)
+
+The keystore signs every release. Guard it like a password — losing it means losing your Play Store identity.
+
+```bash
+keytool -genkey -v \
+  -keystore ~/chophub-release-key.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -alias chophub
+```
+
+You'll be prompted for two passwords — **save these in a password manager**. You'll also be prompted for your name, organization, and location.
+
+```bash
+# Move keystore into the android project
+mv ~/chophub-release-key.jks apps/web/android/app/
+```
+
+### 5. Configure Gradle signing
+
+Create `apps/web/android/app/keystore.properties` (NOT committed to git):
+```
+storeFile=chophub-release-key.jks
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyAlias=chophub
+keyPassword=YOUR_KEY_PASSWORD
+```
+
+Add `keystore.properties` to `apps/web/android/.gitignore`:
+```
+keystore.properties
+*.jks
+```
+
+Edit `apps/web/android/app/build.gradle` — add a `signingConfigs` block and reference it from `release`:
+```gradle
+android {
+    // ... existing config ...
+
+    signingConfigs {
+        release {
+            def keystorePropertiesFile = rootProject.file("app/keystore.properties")
+            def keystoreProperties = new Properties()
+            if (keystorePropertiesFile.exists()) {
+                keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+```
+
+### 6. Build the `.aab`
+
+```bash
+cd apps/web
+bun x vite build
+bun x cap sync android
+cd android
+./gradlew bundleRelease
+```
+
+Output:
+```
+apps/web/android/app/build/outputs/bundle/release/app-release.aab
+```
+
+### 7. Set up Google Play Console (one-time)
+
+1. Pay the **$25 one-time developer fee** at https://play.google.com/console
+2. Create a new app:
+   - App name: `ChopHub`
+   - Default language: English (United States)
+   - App or game: App
+   - Free or paid: Free
+3. Fill in **App content**:
+   - Privacy policy URL: host a privacy policy (can be a single GitHub Pages page)
+   - App access: all functionality available without special access
+   - Ads: no
+   - Data safety: declare what you collect (email, name, phone, address, payment info via Monnify)
+   - Government apps: no
+   - Financial features: yes (you process payments)
+4. **Store listing**:
+   - Short description (80 chars): `Fresh catfish, chicken, cooked African food — delivered.`
+   - Full description (4000 chars): see `PLAY_STORE_LISTING.md` (template below)
+   - Screenshots: minimum 2 per device type (phone + tablet). Use the Android emulator to capture.
+   - App icon: 512×512 PNG (transparent background). Use Figma or AI generation.
+   - Feature graphic: 1024×500 PNG
+5. **Release → Production → Create new release**:
+   - Upload `app-release.aab`
+   - Release name: `1.0.0` (semver)
+   - Release notes: `Initial release`
+
+### 8. Submit for review
+
+Click **Review release → Start rollout to Production**. Google takes 1–7 days for the first review. After approval, the app appears on Play Store within hours.
+
+### 9. Updates
+
+To push a new version:
+1. Bump version in `apps/web/android/app/build.gradle` (`versionCode` + `versionName`)
+2. Rebuild: `cd apps/web/android && ./gradlew bundleRelease`
+3. Play Console → Release → Create new release → upload new `.aab`
+
+---
+
+### Passwords checklist
+
+When you generate the keystore, **save these in your password manager**:
+
+| Item | Where it's used |
+|---|---|
+| Keystore password | `keystore.properties` → `storePassword` |
+| Key password | `keystore.properties` → `keyPassword` |
+| Keystore file | `apps/web/android/app/chophub-release-key.jks` |
+| Key alias | `keystore.properties` → `keyAlias` (default: `chophub`) |
+| Google Play Console login | https://play.google.com/console |
+| Zepto Mail API token | Render env var `ZEPTO_API_TOKEN` |
+| Render API key | for redeploys |
+| MongoDB Atlas password | Render env var `MONGO_URI` |
+
+**If you lose the keystore file or its passwords, you can never update the app again — Google Play will treat any new keystore as a different app.** Back up the `.jks` file to a secure cloud location.
+
+---
+
+## Test accounts (after running seed script)
+
+```
+Superadmin: ekookun8@gmail.com / chophub2026
+Vendors:    adebayo.fish@chophub.test / vendorpass123
+            mama.chicken@chophub.test / vendorpass123
+            jollof.king@chophub.test / vendorpass123
+            (6 more — see scripts/seed-dummy-data.ts)
+Customers:  smoke2@chophub.test / smoketest123
+```
+
+Seed script: `cd apps/api && bun run scripts/seed-dummy-data.ts`
+
+---
+
 *Last updated: 2026-06-29 — Lagos*
