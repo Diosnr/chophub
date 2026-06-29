@@ -8,12 +8,15 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
-    "api": "npm run dev --workspace apps/api",
-    "web": "npm run dev --workspace apps/web"
+    "dev": "concurrently -k -n api,web \"bun run dev:api\" \"bun run dev:web\"",
+    "dev:api": "cd apps/api && bun --watch src/index.ts",
+    "dev:web": "cd apps/web && bun x vite",
+    "build": "bun run build:api && bun run build:web",
+    "build:api": "cd apps/api && tsc",
+    "build:web": "cd apps/web && bun x vite build",
+    "typecheck": "cd apps/api && tsc --noEmit && cd ../web && tsc --noEmit"
   },
-  "engines": {
-    "node": ">=18"
+  "devDependencies": {
+    "concurrently": "^9.0.1"
   }
 }
