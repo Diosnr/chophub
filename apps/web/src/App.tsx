@@ -17,6 +17,7 @@ import VendorLayout from './pages/vendor/VendorLayout';
 import VendorOnboard from './pages/vendor/VendorOnboard';
 import VendorProducts from './pages/vendor/VendorProducts';
 import VendorOrders from './pages/vendor/VendorOrders';
+import VendorStorefront from './pages/VendorStorefront';
 import Wallet from './pages/Wallet';
 import { useAuth } from './lib/auth';
 import { useCart } from './lib/cart';
@@ -135,6 +136,7 @@ function App() {
                     <Route path="orders" element={<VendorOrders />} />
                   </Route>
                   <Route path="/wallet" element={<Wallet />} />
+          <Route path="/store/:id" element={<VendorStorefront />} />
                 </Routes>
     </BrowserRouter>
   );
