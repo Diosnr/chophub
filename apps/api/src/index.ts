@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { connectDB } from './db';
 import authRoutes from './routes/auth';
 import vendorRoutes from './routes/vendors';
@@ -13,6 +14,7 @@ import walletRoutes from './routes/wallet';
 dotenv.config();
 
 const app = express();
+const webDistPath = process.env.WEB_DIST_DIR || path.join(__dirname, '../../../web/dist');
 const PORT = Number(process.env.PORT) || 4000;
 
 app.use(cors());
@@ -47,6 +49,15 @@ if (MONGO_URI && MONGO_URI.startsWith('mongodb')) {
 } else {
   console.log('MONGO_URI not set — API running in health-only mode');
 }
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  next();
+});
+app.use(express.static(webDistPath));
+app.get(/^(?!\/api\/).*/, (_req, res) => {
+  res.sendFile(path.join(webDistPath, 'index.html'));
+});
 
 app.listen(PORT, () => {
   console.log(`ChopHub API listening on port ${PORT}`);
