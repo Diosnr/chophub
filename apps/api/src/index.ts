@@ -5,6 +5,8 @@ import { connectDB } from './db';
 import authRoutes from './routes/auth';
 import vendorRoutes from './routes/vendors';
 import productRoutes from './routes/products';
+import orderRoutes from './routes/orders';
+import paymentsRoutes from './routes/payments';
 
 dotenv.config();
 
@@ -12,6 +14,12 @@ const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
 app.use(cors());
+// Webhook needs raw body for signature verification; capture before json middleware
+app.use('/api/payments/monnify/webhook', express.json({
+  verify: (req: import('express').Request, _res, buf) => {
+    (req as import('express').Request & { rawBody?: Buffer }).rawBody = buf;
+  },
+}));
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
@@ -26,6 +34,8 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentsRoutes);
 
 const MONGO_URI = process.env.MONGO_URI;
 if (MONGO_URI && MONGO_URI.startsWith('mongodb')) {
