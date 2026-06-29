@@ -7,6 +7,11 @@ import ProductDetail from './pages/ProductDetail';
 import CartPage from './pages/CartPage';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminVendors from './pages/admin/AdminVendors';
+import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminSettings from './pages/admin/AdminSettings';
+import AdminOrders from './pages/admin/AdminOrders';
 import { useAuth } from './lib/auth';
 import { useCart } from './lib/cart';
 
