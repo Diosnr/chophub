@@ -6,6 +6,7 @@ import Browse from './pages/Browse';
 import ProductDetail from './pages/ProductDetail';
 import CartPage from './pages/CartPage';
 import Checkout from './pages/Checkout';
+import Orders from './pages/Orders';
 import { useAuth } from './lib/auth';
 import { useCart } from './lib/cart';
 
@@ -100,6 +101,7 @@ function App() {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/orders" element={<Orders />} />
       </Routes>
     </BrowserRouter>
   );
