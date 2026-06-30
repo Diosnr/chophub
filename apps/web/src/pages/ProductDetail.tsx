@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api'
 import Header from '../components/Header';
+import QuantityStepper from '../components/QuantityStepper';
+import WeightSelector from '../components/WeightSelector';
 import { useCart } from '../lib/cart';
 
 interface Product {
@@ -38,8 +40,10 @@ export default function ProductDetail() {
 
   const isPerKg = product.pricingType === 'per-kg';
   const total = isPerKg ? product.price * weightKg : product.price * qty;
+  const inStock = product.stock > 0;
 
   function handleAdd() {
+    if (!inStock) return;
     addToCart({
       productId: product._id,
       vendorId: product.vendorId?._id || product.vendorId,
@@ -55,7 +59,8 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-white pb-20 md:pb-0">
-      <Header /><main className="max-w-6xl mx-auto px-4 py-8">
+      <Header />
+      <main className="max-w-6xl mx-auto px-4 py-8">
         <Link to="/browse" className="text-sm text-gray-500 hover:text-brand-600 mb-4 inline-block">← Back to browse</Link>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="aspect-square bg-gray-100 rounded-xl flex items-center justify-center text-8xl">
@@ -70,40 +75,31 @@ export default function ProductDetail() {
             </p>
             {product.description && <p className="text-gray-700 mb-6">{product.description}</p>}
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              {isPerKg ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
-                  <input
-                    type="number"
-                    min={0.1}
-                    step={0.1}
-                    value={weightKg}
-                    onChange={(e) => setWeightKg(Number(e.target.value))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  />
+              {!inStock ? (
+                <div className="text-center py-4">
+                  <p className="text-red-600 font-semibold">Out of stock</p>
+                  <p className="text-sm text-gray-500 mt-1">Check back later or browse other vendors</p>
                 </div>
+              ) : isPerKg ? (
+                <WeightSelector value={weightKg} onChange={setWeightKg} min={0.5} max={10} />
               ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={qty}
-                    onChange={(e) => setQty(Number(e.target.value))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  />
-                </div>
+                <QuantityStepper value={qty} onChange={setQty} min={1} max={product.stock} />
               )}
               <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
                 <span className="text-gray-600">Total</span>
-                <span className="text-2xl font-bold text-gray-900">₦{total.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-gray-900 tabular-nums">₦{total.toLocaleString()}</span>
               </div>
             </div>
             <button
               onClick={handleAdd}
-              className="w-full bg-brand-600 text-white py-3 rounded-lg font-semibold hover:bg-brand-700"
+              disabled={!inStock}
+              className={`w-full py-3 rounded-lg font-semibold transition ${
+                inStock
+                  ? 'bg-brand-600 text-white hover:bg-brand-700 active:scale-[0.99]'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
             >
-              Add to cart
+              {inStock ? 'Add to cart' : 'Out of stock'}
             </button>
           </div>
         </div>
