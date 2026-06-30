@@ -30,6 +30,7 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-5 text-sm">
             <Link to="/browse" className="text-gray-700 hover:text-brand-600">Browse</Link>
             {user && <Link to="/wallet" className="text-gray-700 hover:text-brand-600">Wallet</Link>}
+            {user && <Link to="/settings" className="text-gray-700 hover:text-brand-600">Settings</Link>}
             {user && (user.role === 'vendor' || isStaff) && (
               <Link to="/vendor/products" className="text-gray-700 hover:text-brand-600">Vendor</Link>
             )}
@@ -88,8 +89,11 @@ export default function Header() {
             <div className="max-w-6xl mx-auto px-4 py-3 space-y-1">
               <Link onClick={close} to="/browse" className="block px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium">Browse</Link>
               {user && (
-                <Link onClick={close} to="/wallet" className="block px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium">Wallet</Link>
-              )}
+                                <Link onClick={close} to="/wallet" className="block px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium">Wallet</Link>
+                              )}
+                              {user && (
+                                <Link onClick={close} to="/settings" className="block px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium">Settings</Link>
+                              )}
               {user && (user.role === 'vendor' || isStaff) && (
                 <Link onClick={close} to="/vendor/products" className="block px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-100 font-medium">Vendor dashboard</Link>
               )}

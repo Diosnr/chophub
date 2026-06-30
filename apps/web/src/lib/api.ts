@@ -90,3 +90,18 @@ export async function demoteAdmin(userId: string) {
   const res = await api.post(`/api/admin/admins/demote/${userId}`);
   return res.data;
 }
+
+export async function updateProfile(payload: { name: string; phone?: string }) {
+  const res = await api.patch('/api/auth/me', payload);
+  return res.data as import('./auth').AuthUser & { phone?: string };
+}
+
+export async function changePassword(payload: { currentPassword: string; newPassword: string }) {
+  const res = await api.post('/api/auth/change-password', payload);
+  return res.data;
+}
+
+export async function rejectVendor(vendorId: string, reason?: string) {
+  const res = await api.post(`/api/vendors/${vendorId}/reject`, { reason });
+  return res.data;
+}

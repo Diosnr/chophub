@@ -45,10 +45,11 @@ export default function AdminVendors() {
 
   async function reject(v: Vendor) {
     if (actionId) return;
-    if (!confirm(`Reject ${v.businessName}? They won't be able to list products.`)) return;
+    const reason = prompt(`Reason for rejecting ${v.businessName}? (Optional — included in the rejection email)`, '');
+    if (reason === null) return; // cancelled
     setActionId(v._id);
     try {
-      await api.post(`/api/vendors/${v._id}/reject`);
+      await api.post(`/api/vendors/${v._id}/reject`, { reason: reason.trim() || undefined });
       toast(`Rejected ${v.businessName}`, 'info');
       load();
     } catch (err: unknown) {

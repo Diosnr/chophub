@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api'
 import Header from '../components/Header';
+import { useAuth } from '../lib/auth';
 
 const CATEGORIES = [
   { id: 'live-catfish', label: 'Live catfish' },
@@ -19,6 +20,7 @@ interface Product {
 }
 
 export default function Browse() {
+    const user = useAuth((s) => s.user);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [category, setCategory] = useState('');
@@ -38,9 +40,21 @@ export default function Browse() {
     );
 
     return (
-      <div className="min-h-screen bg-white pb-20 md:pb-0">
-      <Header /><main className="max-w-6xl mx-auto px-4 py-8">
-          <h2 className="text-3xl font-bold mb-6">Browse</h2>
+          <div className="min-h-screen bg-white pb-20 md:pb-0">
+            <Header /><main className="max-w-6xl mx-auto px-4 py-8">
+                {/* "Become a vendor" CTA — only for customers (no vendor application yet) */}
+                {user?.role === 'customer' && (
+                  <div className="mb-6 bg-gradient-to-r from-brand-600 to-orange-500 text-white rounded-xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">Sell on ChopHub</h3>
+                      <p className="text-sm text-white/90">Catfish, chicken, cooked food — get your storefront in front of customers across Nigeria.</p>
+                    </div>
+                    <Link to="/vendor/onboard" className="bg-white text-brand-700 font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-100 shrink-0 text-center">
+                      Apply now →
+                    </Link>
+                  </div>
+                )}
+                <h2 className="text-3xl font-bold mb-6">Browse</h2>
           <input
             type="search"
             value={search}

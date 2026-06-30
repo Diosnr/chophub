@@ -235,4 +235,70 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// Update profile (name, phone)
+router.patch('/me', async (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'unauthorized', message: 'Missing token' });
+  }
+  try {
+    const payload = jwt.verify(auth.slice(7), JWT_SECRET) as { sub: string };
+    const { name, phone } = req.body || {};
+    if (!name || typeof name !== 'string' || name.trim().length < 2) {
+      return res.status(400).json({ error: 'validation', message: 'Name must be at least 2 characters' });
+    }
+    const user = await User.findByIdAndUpdate(
+      payload.sub,
+      { name: name.trim(), phone: typeof phone === 'string' ? phone.trim() : undefined },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ error: 'not_found', message: 'User not found' });
+    }
+    return res.json({
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      role: user.role,
+      emailVerified: user.emailVerified,
+      walletBalance: user.walletBalance,
+      referralCode: user.referralCode,
+    });
+  } catch (err) {
+    return res.status(401).json({ error: 'unauthorized', message: 'Invalid token' });
+  }
+});
+
+// Change password
+router.post('/change-password', async (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'unauthorized', message: 'Missing token' });
+  }
+  try {
+    const payload = jwt.verify(auth.slice(7), JWT_SECRET) as { sub: string };
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'validation', message: 'Current and new password required' });
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return res.status(400).json({ error: 'validation', message: 'New password must be at least 8 characters' });
+    }
+    const user = await User.findById(payload.sub);
+    if (!user) {
+      return res.status(404).json({ error: 'not_found', message: 'User not found' });
+    }
+    const matches = await user.comparePassword(currentPassword);
+    if (!matches) {
+      return res.status(401).json({ error: 'wrong_password', message: 'Current password is incorrect' });
+    }
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(401).json({ error: 'unauthorized', message: 'Invalid token' });
+  }
+});
+
 export default router;

@@ -21,6 +21,7 @@ import VendorProducts from './pages/vendor/VendorProducts';
 import VendorOrders from './pages/vendor/VendorOrders';
 import VendorStorefront from './pages/VendorStorefront';
 import Wallet from './pages/Wallet';
+import Settings from './pages/Settings';
 import Header from './components/Header';
 import { ToastHost } from './components/Toast';
 import { useAuth } from './lib/auth';
@@ -155,6 +156,7 @@ function App() {
           <Route path="orders" element={<VendorOrders />} />
         </Route>
         <Route path="/wallet" element={<Wallet />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/store/:id" element={<VendorStorefront />} />
       </Routes>
     </BrowserRouter>
