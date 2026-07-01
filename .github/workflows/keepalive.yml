@@ -1,0 +1,30 @@
+name: Keep ChopHub warm
+
+# Render free-tier spins down web services after 15 min of no traffic.
+# This workflow pings the API every 14 minutes so the container stays warm
+# and users never see the "Service waking up..." cold-start page.
+#
+# Free tier: 2000 Actions min/month. Each job runs ~10s.
+# 30 jobs/day * 30 days = 900 jobs/mo = ~150 min/mo. Well within budget.
+
+on:
+  schedule:
+    # Every 14 minutes (Render's spin-down threshold is 15 min)
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping ChopHub API
+        run: |
+          set -e
+          # Hit health endpoint. Render's edge returns 200 immediately even
+          # while the service is sleeping; that's fine — the ping still
+          # counts as traffic and prevents the container from spinning down.
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "https://chophub-api.onrender.com/api/health" || echo "000")
+          echo "Health check returned: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::Unexpected status $STATUS — service may be degraded"
+          fi
