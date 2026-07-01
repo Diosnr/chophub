@@ -1,103 +1,246 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { useToast } from '../../components/Toast';
+import ProductForm from '../../components/ProductForm';
+import type { ProductData } from '../../components/ProductForm';
 
-interface Product {
+interface Product extends ProductData {
   _id: string;
-  name: string;
-  category: string;
-  pricingType: 'fixed' | 'per-kg' | 'per-unit';
-  price: number;
-  stock: number;
   status: 'active' | 'inactive';
 }
 
-const CATEGORIES = ['live-catfish', 'frozen-chicken', 'cooked-food', 'other'];
+const CATEGORY_LABELS: Record<string, string> = {
+  'live-catfish': 'Live catfish',
+  'frozen-chicken': 'Frozen chicken',
+  'cooked-food': 'Cooked food',
+  other: 'Other',
+};
+
+const PRICING_BADGE: Record<string, string> = {
+  fixed: '₦/item',
+  'per-kg': '₦/kg',
+  'per-unit': '₦/pack',
+};
 
 export default function VendorProducts() {
+  const toast = useToast((s) => s.push);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('cooked-food');
-  const [pricingType, setPricingType] = useState<'fixed' | 'per-kg' | 'per-unit'>('fixed');
-  const [price, setPrice] = useState(0);
-  const [stock, setStock] = useState(0);
-  const [error, setError] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<ProductData | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function load() {
     setLoading(true);
-    api.get('/api/products/mine').then((r) => setProducts(r.data)).catch(() => setProducts([])).finally(() => setLoading(false));
+    api
+      .get('/api/products/mine')
+      .then((r) => setProducts(r.data))
+      .catch(() => {
+        toast('Failed to load products', 'error');
+        setProducts([]);
+      })
+      .finally(() => setLoading(false));
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  async function onAdd(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    try {
-      await api.post('/api/products', { name, category, pricingType, price, stock });
-      setName(''); setPrice(0); setStock(0);
-      setAdding(false);
-      load();
-    } catch (err) {
-      const message = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Add failed';
-      setError(message);
-    }
+  function openAdd() {
+    setEditing(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(p: Product) {
+    setEditing(p);
+    setFormOpen(true);
   }
 
   async function toggleStatus(p: Product) {
-    await api.patch(`/api/products/${p._id}`, { status: p.status === 'active' ? 'inactive' : 'active' });
-    load();
+    const next = p.status === 'active' ? 'inactive' : 'active';
+    try {
+      await api.patch(`/api/products/${p._id}`, { status: next });
+      toast(next === 'active' ? `${p.name} is now visible to customers` : `${p.name} is hidden`, 'success');
+      load();
+    } catch {
+      toast('Failed to update status', 'error');
+    }
   }
 
-  async function remove(id: string) {
-    if (!confirm('Delete this product?')) return;
-    await api.delete(`/api/products/${id}`);
+  async function confirmDelete() {
+    if (!deletingId) return;
+    const target = products.find((p) => p._id === deletingId);
+    try {
+      await api.delete(`/api/products/${deletingId}`);
+      toast(`${target?.name || 'Product'} deleted`, 'success');
+      setDeletingId(null);
+      load();
+    } catch {
+      toast('Delete failed', 'error');
+    }
+  }
+
+  function onSaved() {
     load();
   }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Your products</h2>
-        <button onClick={() => setAdding(!adding)} className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">
-          {adding ? 'Cancel' : '+ Add product'}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">Your products</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {products.length} {products.length === 1 ? 'product' : 'products'} listed
+          </p>
+        </div>
+        <button
+          onClick={openAdd}
+          className="bg-brand-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-brand-700 active:scale-[0.99] flex items-center gap-2 self-start sm:self-auto"
+        >
+          <span className="text-lg leading-none">+</span>
+          Add product
         </button>
       </div>
-      {adding && (
-        <form onSubmit={onAdd} className="bg-white border border-gray-200 rounded-xl p-4 mb-6 grid grid-cols-1 md:grid-cols-6 gap-3">
-          {error && <div className="md:col-span-6 bg-red-50 text-red-700 p-2 rounded text-sm">{error}</div>}
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Product name" required className="md:col-span-2 border border-gray-300 rounded px-3 py-2 text-sm" />
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className="border border-gray-300 rounded px-3 py-2 text-sm">
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={pricingType} onChange={(e) => setPricingType(e.target.value as 'fixed' | 'per-kg' | 'per-unit')} className="border border-gray-300 rounded px-3 py-2 text-sm">
-            <option value="fixed">Fixed</option>
-            <option value="per-kg">Per kg</option>
-            <option value="per-unit">Per pack</option>
-          </select>
-          <input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} placeholder="Price (₦)" required className="border border-gray-300 rounded px-3 py-2 text-sm" />
-          <button type="submit" className="bg-brand-600 text-white rounded px-3 py-2 text-sm hover:bg-brand-700">Add</button>
-        </form>
-      )}
-      {loading ? <p>Loading...</p> : products.length === 0 ? (
-        <p className="text-gray-500">No products yet. Add your first one above.</p>
+
+      {loading ? (
+        <div className="flex justify-center py-12 text-gray-500">Loading...</div>
+      ) : products.length === 0 ? (
+        <div className="bg-white border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
+          <div className="text-5xl mb-3">📦</div>
+          <h3 className="font-semibold text-gray-900 mb-1">No products yet</h3>
+          <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">
+            Add your first product — customers can start ordering once it's listed.
+          </p>
+          <button
+            onClick={openAdd}
+            className="bg-brand-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-brand-700"
+          >
+            Add your first product
+          </button>
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {products.map((p) => (
-            <div key={p._id} className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center">
-              <div>
-                <h3 className="font-semibold">{p.name}</h3>
-                <p className="text-xs text-gray-500">{p.category} · {p.pricingType} · ₦{p.price.toLocaleString()}{p.pricingType === 'per-kg' ? '/kg' : p.pricingType === 'per-unit' ? '/pack' : ''} · stock {p.stock}</p>
+            <div
+              key={p._id}
+              className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+            >
+              {/* Thumbnail */}
+              <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                {p.images?.[0] ? (
+                  // eslint-disable-next-line jsx-a11y/img-redundant-alt
+                  <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                ) : p.category === 'live-catfish' ? (
+                  '🐟'
+                ) : p.category === 'frozen-chicken' ? (
+                  '🍗'
+                ) : p.category === 'cooked-food' ? (
+                  '🍲'
+                ) : (
+                  '📦'
+                )}
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => toggleStatus(p)} className={`text-xs px-3 py-1 rounded ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
-                  {p.status}
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-2">
+                  <h3 className="font-semibold text-gray-900 truncate">{p.name}</h3>
+                  {p.status === 'inactive' && (
+                    <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full flex-shrink-0">Hidden</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500 mt-1">
+                  <span>{CATEGORY_LABELS[p.category] || p.category}</span>
+                  <span>·</span>
+                  <span className="font-semibold text-brand-600">
+                    ₦{p.price.toLocaleString()}{PRICING_BADGE[p.pricingType] ? ` ${PRICING_BADGE[p.pricingType]}` : ''}
+                  </span>
+                  {p.pricingType !== 'per-kg' && (
+                    <>
+                      <span>·</span>
+                      <span>{p.stock ?? 0} in stock</span>
+                    </>
+                  )}
+                </div>
+                {p.description && (
+                  <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">{p.description}</p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 sm:flex-shrink-0">
+                <button
+                  onClick={() => toggleStatus(p)}
+                  className={`text-xs px-3 py-2 rounded-lg font-medium transition active:scale-95 ${
+                    p.status === 'active'
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {p.status === 'active' ? 'Active' : 'Hidden'}
                 </button>
-                <button onClick={() => remove(p._id)} className="text-xs text-red-600 hover:text-red-700">Delete</button>
+                <button
+                  onClick={() => openEdit(p)}
+                  className="text-xs px-3 py-2 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setDeletingId(p._id)}
+                  className="text-xs px-3 py-2 rounded-lg font-medium text-red-600 hover:bg-red-50 active:scale-95"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Add/Edit form modal */}
+      {formOpen && (
+        <ProductForm
+          initial={editing}
+          onClose={() => {
+            setFormOpen(false);
+            setEditing(null);
+          }}
+          onSaved={onSaved}
+        />
+      )}
+
+      {/* Delete confirmation modal */}
+      {deletingId && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-slide-in"
+          onClick={() => setDeletingId(null)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-3xl mb-2">🗑️</div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Delete this product?</h3>
+            <p className="text-sm text-gray-600 mb-5">
+              <strong>{products.find((p) => p._id === deletingId)?.name}</strong> will be removed
+              for customers. This can't be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingId(null)}
+                className="flex-1 py-2.5 rounded-lg font-semibold text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-600 text-white py-2.5 rounded-lg font-semibold hover:bg-red-700 active:scale-[0.99]"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -13,10 +13,12 @@ const CATEGORIES = [
 interface Product {
   _id: string;
   name: string;
+  description?: string;
   category: string;
   pricingType: string;
   price: number;
   vendorId: { _id: string; businessName: string };
+  images?: string[];
 }
 
 export default function Browse() {
@@ -92,14 +94,22 @@ export default function Browse() {
                 <Link
                   key={p._id}
                   to={`/product/${p._id}`}
-                  className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
+                  className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow group"
                 >
-                  <div className="aspect-square bg-gray-100 flex items-center justify-center text-6xl">
-                    {p.category === 'live-catfish' ? '🐟' : p.category === 'frozen-chicken' ? '🍗' : p.category === 'cooked-food' ? '🍲' : '📦'}
+                  <div className="aspect-square bg-gray-100 flex items-center justify-center text-6xl overflow-hidden">
+                    {p.images?.[0] ? (
+                      // eslint-disable-next-line jsx-a11y/img-redundant-alt
+                      <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    ) : (
+                      <span>{p.category === 'live-catfish' ? '🐟' : p.category === 'frozen-chicken' ? '🍗' : p.category === 'cooked-food' ? '🍲' : '📦'}</span>
+                    )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-900">{p.name}</h3>
-                    <p className="text-xs text-gray-500 mb-2">{p.vendorId?.businessName || 'Vendor'}</p>
+                    <h3 className="font-semibold text-gray-900 line-clamp-1">{p.name}</h3>
+                    <p className="text-xs text-gray-500 mb-1">{p.vendorId?.businessName || 'Vendor'}</p>
+                    {p.description && (
+                      <p className="text-xs text-gray-600 mb-2 line-clamp-2">{p.description}</p>
+                    )}
                     <p className="text-lg font-bold text-brand-600">
                       ₦{p.price.toLocaleString()}
                       {p.pricingType === 'per-kg' ? '/kg' : p.pricingType === 'per-unit' ? '/pack' : ''}
